@@ -3,9 +3,35 @@
 
 #include <iostream>
 
-int main()
+#include <GL\glew.h>
+#include <GL\freeglut.h>
+
+void setupWindow()
 {
-    std::cout << "Hello World!\n";
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	// Set the window size
+	glutInitWindowSize(800, 600);
+	glutCreateWindow("OpenGL Water Renderer");
+	GLenum res = glewInit();
+
+	// ensure it was started properly
+	if (res != GLEW_OK)
+	{
+		fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
+		return 0;
+	}
+}
+
+int main(int argc, char* argv[])
+{
+
+	glutInit(&argc, argv);
+	setupWindow();
+	glutMainLoop();
+	return 0;
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
