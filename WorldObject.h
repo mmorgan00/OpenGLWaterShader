@@ -25,7 +25,7 @@ class WorldObject
 
 
 	// represented as file paths, will be decoded at runtime
-	char* textureFile;
+	char* textureFile = nullptr;
 	char* normalMapFile = nullptr;
 	char* displacementMapFile = nullptr;
 	char* meshFile;

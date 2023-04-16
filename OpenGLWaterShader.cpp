@@ -5,6 +5,41 @@
 
 #include <GL\glew.h>
 #include <GL\freeglut.h>
+#include "Renderer.h"
+
+vector<cyVec3f> gridVerts;
+GLuint heightGridVAO;
+GLuint heightGridVertVBO;
+cyGLSLProgram heightGridProgram;
+
+void createHeightGrid()
+{
+	for (int i = 0; i < 11; i++)
+	{
+		for (int j = 0; j < 11; j++)
+		{
+			gridVerts.push_back(cyVec3f(-0.5f + (0.1 * i), -0.5f + (0.1 * j), 0));
+		}
+	}
+
+	glGenVertexArrays(1, &heightGridVAO);
+	glBindVertexArray(heightGridVAO);
+
+	glGenBuffers(1, &heightGridVertVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, heightGridVertVBO);
+	glBufferData(GL_ARRAY_BUFFER, gridVerts.size() * sizeof(cy::Vec3f), &gridVerts[0], GL_STATIC_DRAW);
+	
+	
+	boolean success = heightGridProgram.BuildFiles("shader.vert", "shader.frag");
+	if (!success) {
+		std::cout << "Error building shaders" << std::endl;
+	}
+
+	heightGridProgram.Bind();
+	glEnableVertexAttribArray(0);
+
+}
+
 
 void setupWindow()
 {
@@ -21,8 +56,15 @@ void setupWindow()
 	if (res != GLEW_OK)
 	{
 		fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
-		return 0;
 	}
+}
+
+void render()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glBindVertexArray(heightGridVAO);
+	glDrawArrays(GL_POINTS, 0, gridVerts.size());
+	glutSwapBuffers();
 }
 
 int main(int argc, char* argv[])
@@ -30,7 +72,12 @@ int main(int argc, char* argv[])
 
 	glutInit(&argc, argv);
 	setupWindow();
+	
+	createHeightGrid();
+	glutDisplayFunc(render);
+	
 	glutMainLoop();
+	
 	return 0;
 }
 
