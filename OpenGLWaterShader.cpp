@@ -6,11 +6,15 @@
 #include <GL\glew.h>
 #include <GL\freeglut.h>
 #include "Renderer.h"
+#include "cyGL/cyGL.h"
+#include "cyGL/cyMatrix.h"
+
 
 vector<cyVec3f> gridVerts;
 GLuint heightGridVAO;
 GLuint heightGridVertVBO;
 cyGLSLProgram heightGridProgram;
+Camera camera;
 
 void createHeightGrid()
 {
@@ -29,27 +33,42 @@ void createHeightGrid()
 	glBindBuffer(GL_ARRAY_BUFFER, heightGridVertVBO);
 	glBufferData(GL_ARRAY_BUFFER, gridVerts.size() * sizeof(cy::Vec3f), &gridVerts[0], GL_STATIC_DRAW);
 	
+	glVertexArrayVertexBuffer(heightGridVAO, 0, heightGridVertVBO, 0, sizeof(cyVec3f));
+	glVertexArrayAttribBinding(heightGridVAO, 0, 0);
+	glVertexArrayAttribFormat(heightGridVAO, 0, 3, GL_FLOAT, GL_FALSE, offsetof(cyVec3f, x));
+	glVertexArrayBindingDivisor(heightGridVAO, 0, 0);
+
+
+	glEnableVertexArrayAttrib(heightGridVAO, 0);
 	
 	boolean success = heightGridProgram.BuildFiles("shader.vert", "shader.frag");
 	if (!success) {
 		std::cout << "Error building shaders" << std::endl;
 	}
-
-	heightGridProgram.Bind();
+	GLint viewloc = glGetUniformLocation(heightGridProgram.GetID(), "view");
+	glUniformMatrix4fv(viewloc, 1, GL_TRUE, &camera.view[0]);
 	glEnableVertexAttribArray(0);
 
 }
 
+void render()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glBindVertexArray(heightGridVAO);
+	heightGridProgram.Bind(); // equivalent ot the glUseProgram() call
+	glDrawArrays(GL_POINTS, 0, gridVerts.size());
+	glutSwapBuffers();
+}
 
 void setupWindow()
 {
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-
+	glutInitWindowSize(800, 600);
+	glutCreateWindow("OpenGL Water Renderer");
+	glutDisplayFunc(render);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	// Set the window size
-	glutInitWindowSize(800, 600);
-	glutCreateWindow("OpenGL Water Renderer");
 	GLenum res = glewInit();
 
 	// ensure it was started properly
@@ -59,22 +78,16 @@ void setupWindow()
 	}
 }
 
-void render()
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBindVertexArray(heightGridVAO);
-	glDrawArrays(GL_POINTS, 0, gridVerts.size());
-	glutSwapBuffers();
-}
+
 
 int main(int argc, char* argv[])
 {
 
 	glutInit(&argc, argv);
 	setupWindow();
-	
+	camera = Camera();
 	createHeightGrid();
-	glutDisplayFunc(render);
+	
 	
 	glutMainLoop();
 	
